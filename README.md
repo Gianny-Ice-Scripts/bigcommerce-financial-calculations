@@ -7,8 +7,7 @@ The script will prompt you for:
 1. Account activity before fees
 1. Net balance change
 
-**Run the Script**  
-Run the script:
+**Run the Script:**
 
 ```bash
 node calc.js
