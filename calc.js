@@ -55,6 +55,17 @@ function calculateProportionalFees(invoice, totalFee) {
   return feesPerProduct;
 }
 
+// Function to check if email contains any of the filtered terms
+function shouldIgnoreCustomer(email) {
+  if (!email) return false;
+  const lowerEmail = email.toLowerCase();
+  return (
+    lowerEmail.includes("razoyo") ||
+    lowerEmail.includes("automaticffl") ||
+    lowerEmail.includes("refactored.group")
+  );
+}
+
 // Function to check if the payment contains the specified product and calculate fees
 async function getProductFees(stripe, customerId, totalFee, ammoProductId) {
   try {
@@ -163,8 +174,17 @@ async function main() {
     for (const row of rows) {
       process.stdout.write(".");
       const customerId = row["customer_id"];
+      const customerEmail = row["customer_email"];
       const grossValue = parseFloat(row["gross"]) || 0;
       const feeValue = parseFloat(row["fee"]) || 0;
+
+      // Skip customers with email containing 'razoyo' or 'automaticffl'
+      if (shouldIgnoreCustomer(customerEmail)) {
+        console.log(
+          `\nSkipping customer ${customerEmail} with ID ${customerId} due to email filtering`
+        );
+        continue;
+      }
 
       if (!customerId) {
         // Rows without customer ID: use values as is
@@ -220,7 +240,13 @@ async function main() {
     let bigCommerceGrossSales = grossAmountBeforeFees - totalGross;
     for (const row of rows) {
       const customerId = row["customer_id"];
+      const customerEmail = row["customer_email"];
       const grossValue = parseFloat(row["gross"]) || 0;
+
+      // Skip customers with email containing 'razoyo' or 'automaticffl'
+      if (shouldIgnoreCustomer(customerEmail)) {
+        continue;
+      }
 
       if (customerId && customerIds.includes(customerId)) {
         const invoices = await stripe.invoices.list({
